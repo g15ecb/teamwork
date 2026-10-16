@@ -7,7 +7,7 @@ description: Exhaustive, adversarially-tested, fully-cited research into any top
 
 Invoke the `teamwork-core` skill with this parameter block (if the Skill tool can't load it, read `../teamwork-core/SKILL.md` relative to this skill's base directory and follow it). The objective is the user's topic.
 
-- `objective`: the topic (ask once if ambiguous: scope, time horizon, audience).
+- `objective`: the topic. If ambiguous, ask once via `AskUserQuestion` single-selects with inferred options: scope (narrow/broad readings of the topic), time horizon (e.g. last 2 years / last decade / full history), audience (practitioner / researcher / executive).
 - `slug`: kebab-case topic.
 - `scout_lenses`: overview and terminology; history and origins; current state, key players and numbers; academic/primary literature; practitioner and community experience; controversies, failures, open questions. Scouts are `general-purpose` (web).
 - `evidence_rules`: citation = URL / DOI / book+page, a short **verbatim quote**, source type (`primary | peer-reviewed | official-docs | reputable-secondary | practitioner | community | unknown`), date, access date. Sources must be fetched, not taken from snippets. Prefer primary sources. Target 15+ sources per area.

@@ -12,7 +12,7 @@ Private implementation skill. The calling skill (the **wrapper**) hands you a **
 
 | Field | Meaning |
 |---|---|
-| `objective` | What the user wants. Ask once if missing. |
+| `objective` | What the user wants. If missing, ask once (see the user-input rule). |
 | `slug` | kebab-case name for the scratch dir. |
 | `scout_lenses` | 3-6 lenses for stage 1. |
 | `evidence_rules` | What counts as a citation for this wrapper (URL+quote, `path:line`, spec source...). |
@@ -25,6 +25,7 @@ Private implementation skill. The calling skill (the **wrapper**) hands you a **
 
 ## Orchestration rules
 
+- **All user input goes through `AskUserQuestion`**, here and in wrappers. Offer concrete options inferred from the conversation, the cwd or the scouts, recommended option first and marked `(Recommended)`, each with a description that says what it means and what it costs. "Other" is added automatically for free text. Plain-text questions are a last resort, used only when no options can be inferred. Bundle questions into as few calls as possible (up to 4 questions per call, 4 options per question), and never ask what a sensible default answers.
 - **Subagents see none of this conversation and cannot spawn agents.** Every prompt you write must stand alone: the role, the absolute path of `brief.md` (stage 2), the files to read, the iron rules verbatim, the exact output file path and the return format.
 - Every agent that writes a file is `general-purpose`. `Explore` cannot write files: use it only for code scouts, which return their report as their final message for you to save.
 - Spawn each stage's agents in parallel in one message, then **wait for every completion notification** before starting the next stage. Never act on, summarise or guess a result that hasn't arrived.
@@ -68,14 +69,22 @@ Save each report to `scout-<lens>.md`. Read all of them, then merge and dedupe i
 
 Use `AskUserQuestion` with selectable options. Never ask the user to type a list.
 
+**Scope**
 1. **Focus areas**: multiSelect, recommendations first and marked `(Recommended)`, each described in its option description.
 2. **SMEs**: multiSelect over the proposed roster, each with its justification as the description. Don't list `mandatory_roles`, adversarial or contrarian members here; say in the question text that they are always included.
-3. **Depth/team size** (single-select): small / medium / large, recommended first, each description giving the head-count.
-4. Any wrapper-specific choice (e.g. audience) as further single-selects.
 
-Each call allows up to 4 options and 4 questions. If a list is longer than 4, split it across questions grouped by theme, or fold the lowest-priority items into one "Everything else" option. Make a second call if you need more questions. "Other" is added automatically for additions. Stop until the user answers. Never re-run stage 1 afterward; if the user's additions change things materially, re-confirm with another UI question.
+**Run settings** (single-selects, recommended first)
 
-Write `brief.md` containing the objective, confirmed focus areas (with the scout evidence for each), the team roster, the full `evidence_rules`, `extra_rules` and the scout file paths. Then announce the team to the user, one line per member: name, what it examines, and the scout finding or user pick behind it. Drop any SME with no trace to evidence or a user pick.
+3. **Team size**: small / medium / large, recommending the complexity rating, each description giving the head-count.
+4. **Citation verification**:
+   - `Full (Recommended)`: verifiers re-open every citation. Slowest and most token-hungry, but the most reliable.
+   - `Targeted`: verifiers check claims the adversaries targeted, claims resting on a single source, and a random 25% of the rest. Any file whose sample fails more than 10% is escalated to full.
+   - `Judge spot-check`: no verifiers; the judge re-checks high-impact and borderline citations itself. Fastest, and the weakest guarantee.
+5. Any wrapper-specific choice (e.g. audience).
+
+Use one call when everything fits in 4 questions. Otherwise ask scope first and run settings second. If a list is longer than 4, split it across questions grouped by theme, or fold the lowest-priority items into one "Everything else" option. "Other" is added automatically for additions. Stop until the user answers. Never re-run stage 1 afterward; if the user's additions change things materially, re-confirm with another UI question.
+
+Write `brief.md` containing the objective, confirmed focus areas (with the scout evidence for each), the team roster, the verification mode, the full `evidence_rules`, `extra_rules` and the scout file paths. Then announce the team to the user, one line per member: name, what it examines, and the scout finding or user pick behind it. Drop any SME with no trace to evidence or a user pick.
 
 ## Stage 3: Team (independent round)
 
@@ -94,13 +103,15 @@ Once every stage-3 member has finished, `SendMessage` each adversarial member th
 
 ## Stage 5: Verification
 
-Spawn verifiers in parallel. Each takes one or more ledger files (`sme-*`, `adv-*`, `contrarian.md`, extra roles), up to about 40 claims per verifier. For **every** claim the verifier re-opens the cited source (reads the file at those lines, fetches the URL, finds the commit) and checks two things: the quote appears there, and it entails the statement. Verifiers judge support, not value. Each writes `verify-<n>.md` with rows `id | VERIFIED | QUOTE-MISMATCH | NOT-ENTAILED | UNREACHABLE | note`.
+Skip this stage under `Judge spot-check`.
+
+Spawn verifiers in parallel. Each takes one or more ledger files (`sme-*`, `adv-*`, `contrarian.md`, extra roles), up to about 40 claims per verifier. The claims in scope depend on the mode: every claim under `Full`; the targeted set plus escalations under `Targeted` (rows not checked are marked `UNCHECKED`). For each claim in scope, the verifier re-opens the cited source (reads the file at those lines, fetches the URL, finds the commit) and checks two things: the quote appears there, and it entails the statement. Verifiers judge support, not value. Each writes `verify-<n>.md` with rows `id | VERIFIED | QUOTE-MISMATCH | NOT-ENTAILED | UNREACHABLE | UNCHECKED | note`.
 
 ## Stage 6: Judge
 
 Spawn one fresh `general-purpose` judge, and note its ID. Give it `brief.md`, `judge_bias`, the wrapper's `output` spec and every ledger and verify file. For each component (claim, approach or scenario) it rules on merit:
 
-- **Support**: start from the verifier's result. A claim that is not `VERIFIED` cannot be included as cited unless right of reply fixes it. `INFERENCE` stands only if every fact it names is included.
+- **Support**: start from the verifier's result. A claim marked `QUOTE-MISMATCH`, `NOT-ENTAILED` or `UNREACHABLE` cannot be included as cited unless right of reply fixes it. For `UNCHECKED` claims (or every claim under `Judge spot-check`), the judge re-opens the citations of all high-impact and borderline ones itself. `INFERENCE` stands only if every fact it names is included.
 - **Source weight and independence**: primary > secondary > community. A shared upstream origin is not corroboration.
 - **Contradiction**: unresolved conflicts are carried as `INCLUDE-DISPUTED` with both sides, not deleted. Adversarial and contrarian findings are judged on merit, and a surviving adversarial finding overrides the claim it targets.
 - **Value** to the objective and confirmed focus areas.
@@ -134,7 +145,7 @@ Also diff any wrapper-protected tokens. If the diff is empty, ship `edited.md`. 
 Write the final output to `output.path`. Tell the user:
 
 - the path;
-- counts of included, disputed and excluded components, from `rulings.md`;
+- counts of included, disputed and excluded components, from `rulings.md`, and the verification mode used;
 - the key gaps and open questions;
 - that `.teamwork/<slug>/` holds the ledgers, verifications and rulings.
 

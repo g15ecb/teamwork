@@ -7,9 +7,9 @@ description: Build a rigorous, over-constrained specification from a context mar
 
 Invoke the `teamwork-core` skill with this parameter block (if the Skill tool can't load it, read `../teamwork-core/SKILL.md` relative to this skill's base directory and follow it).
 
-First, find the spec format: check `CLAUDE.md`, `AGENTS.md`, `README`, `CONTRIBUTING`, `docs/`, `spec(s)/`, `rfcs/`, `adr/`, templates, existing specs, and the conversation. Found: use it exactly (sections, IDs, MUST/SHOULD, location, naming) and record its source. None: BDD `Given / When / Then` (`When / Then` if no precondition), grouped under features with stable IDs (`FEAT-01.S3`).
+First, find the spec format: check `CLAUDE.md`, `AGENTS.md`, `README`, `CONTRIBUTING`, `docs/`, `spec(s)/`, `rfcs/`, `adr/`, templates, existing specs, and the conversation. Found: use it exactly (sections, IDs, MUST/SHOULD, location, naming) and record its source. If several formats conflict, ask which to follow with an `AskUserQuestion` single-select (one option per format, each with its source) in the stage-2 run-settings call. None: BDD `Given / When / Then` (`When / Then` if no precondition), grouped under features with stable IDs (`FEAT-01.S3`).
 
-Context: the user supplies a context markdown file path (ask once if missing; never proceed from memory). Read it all; split into focus, background, constraints/non-goals. Research is evidence, not requirements. Gaps and contradictions go to Open questions. Put the context file's absolute path, the chosen format and its source in `brief.md`; every agent reads the context file in full.
+Context: the user supplies a context markdown file path. If missing, ask once via `AskUserQuestion`, offering up to 4 likely candidates (`.md` files mentioned in the conversation, then recently modified ones outside `.teamwork/`) with "Other" for a typed path. Never proceed from memory. Read it all; split into focus, background, constraints/non-goals. Research is evidence, not requirements. Gaps and contradictions go to Open questions. Put the context file's absolute path, the chosen format and its source in `brief.md`; every agent reads the context file in full.
 
 - `objective`: specify the focus described in the context file.
 - `slug`: kebab-case name.
