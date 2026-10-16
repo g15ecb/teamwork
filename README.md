@@ -27,3 +27,18 @@ npx skills add g15ecb/teamwork --skill teamwork-core --skill teamwork-research
 | `teamwork-core` | Private engine (`user-invocable: false`); the four above call it with a parameter block |
 
 Scratch ledgers and rulings live in `.teamwork/<slug>/`.
+
+## Models
+
+Each subagent is spawned on a fixed model, whatever model your session uses. The orchestrator (your session) should be Opus: it merges the scout reports, picks the team and writes every agent prompt. On hosts with no per-agent model setting, every agent runs on the session model.
+
+| Role | Model | Why |
+|---|---|---|
+| Orchestrator (your session) | Opus (recommended) | Merges scouts, picks the team, writes standalone prompts, routes right of reply |
+| Scouts | Sonnet | Shallow sketches, 400 words or fewer |
+| SMEs, adversarial, contrarian, architects, tester | Opus | Expert depth and counter-example hunting decide output quality |
+| Web researchers | Sonnet | Fetch and cite non-code context |
+| Verifiers | Sonnet | Narrow check: quote present, statement entailed. Highest call count |
+| Judge | Opus | Weighting, contradictions and fidelity; everything downstream depends on it |
+| Synthesiser | Opus | Frames the explanation without adding facts |
+| Editor, format verifier | Sonnet | Mechanical, and checked by shell diffs |

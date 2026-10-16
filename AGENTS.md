@@ -18,10 +18,12 @@ Guidance for agents editing this repo. The repo ships [skills.sh](https://skills
 7. **Every user decision point is UI-based.** Any choice the user makes (scope, team, run settings, sources, format, confirmations) is an `AskUserQuestion` prompt with selectable options, never a request to type a reply or a list. Infer the options, put the recommended one first marked `(Recommended)`, and describe what each means and costs. Free text only via the automatic "Other", even when options are hard to infer: offer best guesses and let "Other" take the typed answer. Never ask what a sensible default answers. A new skill or stage that needs a user decision must add it as a UI question.
 8. **Focus on user ergonomics.** Respect the user's time and attention. Ask as few times as possible: bundle questions into one call, preselect what can be inferred, and use good defaults instead of asking. Invocation should be one line (`teamwork-research: <topic>`). Say what's happening at each stage in a line or two, and keep the delivery message short: path, counts, key gaps. Never dump the full output or the ledgers into the chat. When a change makes a skill more rigorous but more tedious to use, find a way to keep the rigour without the tedium, or make it a user choice.
 9. **Read-only on the user's world.** Agents never modify the user's repo outside `.teamwork/` and never run builds, scripts, tests or hooks from cloned upstream code.
-10. **Terse, plain prose.** Skill files are instructions for a model. Short imperative sentences, tables for structured fields, no filler. Run new prose past `stop-slop` if it's installed.
+10. **Every subagent has a prescribed model.** A new role gets a row in `teamwork-core`'s **Models** table, picked for its job: `opus` for judgment (expert analysis, attack, ruling, synthesis), `sonnet` for shallow or mechanical work (scouting, fetching, verification, editing). No role inherits the session model by omission.
+11. **Terse, plain prose.** Skill files are instructions for a model. Short imperative sentences, tables for structured fields, no filler. Run new prose past `stop-slop` if it's installed.
 
 ## When you change something
 
 - Update the README skill table and install notes if a skill is added, renamed or changes its invocation.
+- Keep the README **Models** table in sync with `teamwork-core`'s **Models** table. A new role gets a row in both.
 - Keep each `SKILL.md` frontmatter `description` accurate: it's what triggers the skill.
 - A rename touches every wrapper that names the skill and any relative fallback path (`../<skill>/SKILL.md`).

@@ -60,10 +60,25 @@ Always confirm the format in the stage-2 run-settings call, even when only one s
 - **Keep the user oriented.** At the start of each stage, tell the user in one line where the run is and what's happening, e.g. `Stage 3/8 · Team: 5 SMEs, 1 adversarial, 1 contrarian working`. When a stage ends, say in one line what came out of it (e.g. `Verification: 112 verified, 6 quote mismatches`). Name skipped stages (`Stage 5/8 · Verification skipped (judge spot-check)`). No more than two lines per stage; the detail stays in `.teamwork/<slug>/`.
 - **Subagents see none of this conversation and cannot spawn agents.** Every prompt you write must stand alone: the role, the absolute path of `brief.md` (stage 2), the files to read, the iron rules verbatim, the exact output file path and the return format.
 - Every agent that writes a file is `general-purpose`. `Explore` cannot write files: use it only for scouts that read local files, which return their report as their final message for you to save.
+- Set `model` on every spawn per **Models**. Resumed agents keep theirs.
 - Spawn each stage's agents in parallel in one message, then **wait for every completion notification** before starting the next stage. Never act on, summarise or guess a result that hasn't arrived.
 - Agents return only their file path and a summary of 5 lines or fewer. Don't read agent files yourself unless a stage says to; your context is the bottleneck.
 - If an agent fails or writes no file, re-spawn it once with the same prompt. If it fails again, record the gap in `gaps.md` and continue.
 - Keep every agent ID. Resume an agent with `SendMessage` (load it via `ToolSearch` if it is deferred). If resuming fails, spawn a fresh agent seeded with the original agent's file.
+
+## Models
+
+The orchestrator runs on the session model. Pass each agent's model as the `Agent` tool's `model` parameter; it overrides the session model. A wrapper role not listed takes the row of the role it replaces or most resembles.
+
+| Role | Model |
+|---|---|
+| Scouts | `sonnet` |
+| SMEs, adversarial, contrarian, architects, tester | `opus` |
+| Web researchers | `sonnet` |
+| Verifiers | `sonnet` |
+| Judge | `opus` |
+| Synthesiser | `opus` |
+| Editor, format verifier | `sonnet` |
 
 ## Iron rules (verbatim in every agent prompt)
 
