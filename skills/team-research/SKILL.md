@@ -5,7 +5,7 @@ description: Exhaustive, adversarially-tested, fully-cited research into any top
 
 # team-research
 
-Invoke the `teamwork-core` skill with this parameter block. The objective is the user's topic.
+Invoke the `teamwork-core` skill with this parameter block (if the Skill tool can't load it, read `../teamwork-core/SKILL.md` relative to this skill's base directory and follow it). The objective is the user's topic.
 
 - `objective`: the topic (ask once if ambiguous: scope, time horizon, audience).
 - `slug`: kebab-case topic.
