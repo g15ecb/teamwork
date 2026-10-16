@@ -10,19 +10,19 @@ npx skills add g15ecb/teamwork
 
 Installs all four skills.
 
-**You must always install `teamwork-core`.** `team-research`, `team-spec` and `team-code-understanding` are thin wrappers that call it and do nothing without it. If you install skills selectively, include it:
+**You must always install `teamwork-core`.** `teamwork-research`, `teamwork-spec` and `teamwork-code-understanding` are thin wrappers that call it and do nothing without it. If you install skills selectively, include it:
 
 ```
-npx skills add g15ecb/teamwork --skill teamwork-core --skill team-research
+npx skills add g15ecb/teamwork --skill teamwork-core --skill teamwork-research
 ```
 
 ## Skills
 
 | Skill | Use |
 |---|---|
-| `team-research` | `team-research: <topic>` writes `SLUG.md` |
-| `team-spec` | `/team-spec path/to/context.md` writes a spec |
-| `team-code-understanding` | `team-code-understanding: <topic>` writes `understanding-SLUG.md` |
+| `teamwork-research` | `teamwork-research: <topic>` writes `SLUG.md` |
+| `teamwork-spec` | `/teamwork-spec path/to/context.md [format instructions]` writes a spec (your format, the project's, else Gherkin), every step cited to the context |
+| `teamwork-code-understanding` | `teamwork-code-understanding: <topic>` writes `understanding-SLUG.md` |
 | `teamwork-core` | Private engine (`user-invocable: false`); the three above call it with a parameter block |
 
 Scratch ledgers and rulings live in `.teamwork/<slug>/`.

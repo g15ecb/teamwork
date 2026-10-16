@@ -1,6 +1,6 @@
 ---
 name: teamwork-core
-description: Internal engine shared by team-research, team-spec and team-code-understanding. Not for direct use; invoked by those skills with a parameter block (objective, scout lenses, citation rules, output spec).
+description: Internal engine shared by teamwork-research, teamwork-spec and teamwork-code-understanding. Not for direct use; invoked by those skills with a parameter block (objective, scout lenses, citation rules, output spec).
 user-invocable: false
 ---
 

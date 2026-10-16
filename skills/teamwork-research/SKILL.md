@@ -1,9 +1,9 @@
 ---
-name: team-research
-description: Exhaustive, adversarially-tested, fully-cited research into any topic using a team of subagents (scouts, SMEs, adversarial and contrarian members, a judge, an anti-slop editor). Produces a verbose markdown reference document (SLUG.md). Use when the user says "team-research", "research X exhaustively", "deep research on X", or wants rigorous, source-cited research rather than a quick answer. Not for quick lookups.
+name: teamwork-research
+description: Exhaustive, adversarially-tested, fully-cited research into any topic using a team of subagents (scouts, SMEs, adversarial and contrarian members, a judge, an anti-slop editor). Produces a verbose markdown reference document (SLUG.md). Use when the user says "teamwork-research", "research X exhaustively", "deep research on X", or wants rigorous, source-cited research rather than a quick answer. Not for quick lookups.
 ---
 
-# team-research
+# teamwork-research
 
 Invoke the `teamwork-core` skill with this parameter block (if the Skill tool can't load it, read `../teamwork-core/SKILL.md` relative to this skill's base directory and follow it). The objective is the user's topic.
 

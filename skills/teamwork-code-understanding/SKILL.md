@@ -1,9 +1,9 @@
 ---
-name: team-code-understanding
-description: Understand how a topic, objective or change relates to the code base in the current directory (code, design, architecture) using a team of subagents with domain-expert, adversarial, contrarian and web members and a judge who keeps only well-cited claims. Use when the user says "team-code-understanding" or "help me understand how X fits into this code base". Not for quick lookups.
+name: teamwork-code-understanding
+description: Understand how a topic, objective or change relates to the code base in the current directory (code, design, architecture) using a team of subagents with domain-expert, adversarial, contrarian and web members and a judge who keeps only well-cited claims. Use when the user says "teamwork-code-understanding" or "help me understand how X fits into this code base". Not for quick lookups.
 ---
 
-# team-code-understanding
+# teamwork-code-understanding
 
 Invoke the `teamwork-core` skill with this parameter block (if the Skill tool can't load it, read `../teamwork-core/SKILL.md` relative to this skill's base directory and follow it). If the cwd is not a code base, say so and stop.
 
