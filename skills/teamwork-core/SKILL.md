@@ -21,9 +21,12 @@ Private implementation skill. The calling skill (the **wrapper**) hands you a **
 | `sme_hints` | Guidance on what kinds of SMEs suit this objective. |
 | `mandatory_roles` | Roles always on the team, never offered as deselectable options (optional). |
 | `role_overrides` | Replaces or refocuses the default adversarial or contrarian brief (optional). |
+| `cross_exam` | Ledgers adversaries also attack in stage 4, besides `sme-*.md` (optional). |
 | `team_scale` | Overrides the default team sizes below (optional). |
 | `judge_bias` | How the judge leans on close calls (optional). |
 | `output` | `kind` (`document` or `other`), path, required structure. |
+| `format` | Turns on **Output format**: `search` (where the project keeps its own format), `default` (fallback format and its source), `required` (content the output must carry whatever the format) (optional). |
+| `decision` | A user choice after stage 6: `file` (a short file the judge also writes, e.g. a ranking), `question` (how to build the `AskUserQuestion` from it) (optional). |
 | `extra_rules` | Anything else (spec format, extra roles, protected tokens...). |
 
 ## Sources
@@ -38,6 +41,18 @@ The source mode decides where evidence may come from, how it is cited and which 
 **Upstream code** (any mode except `given`). When the subject is open-source software, or a spec with a reference implementation, any agent may shallow-clone the upstream repo at the relevant release tag (`git clone --depth 1 --branch <tag> <url> .teamwork/<slug>/src/<name>`), reuse an existing clone, record the SHA in its ledger and cite `<repo>@<sha>:path:line`. Read only: never run its build, scripts, tests or hooks.
 
 **Weighting** (agents and judge). For what a system does: source code > spec, RFC or paper > official docs > reputable secondary > practitioner > community. For what it should do, the normative spec leads. A shared upstream origin is not corroboration. Where docs and code disagree, the disagreement is a finding.
+
+## Output format
+
+Applies when the wrapper sets `format`. First match wins:
+
+1. Instructions or a format the user gave at invocation or in an input file (template, sections, ID scheme, citation style, output path). Follow them exactly.
+2. The project's format: check `CLAUDE.md`, `AGENTS.md`, `README`, `CONTRIBUTING`, templates and the wrapper's `format.search` locations, including existing documents of the same kind. Use it exactly (sections, IDs, MUST/SHOULD, location, naming).
+3. `format.default`.
+
+Always confirm the format in the stage-2 run-settings call, even when only one source matched: a single-select whose first option is the winning format, labelled `(Recommended)` with its source in the description, then any other formats found (each with its source, including every conflicting one within the winning level), then the default if not already listed (4 options max; drop the least specific). "Other" lets the user type a format or point to a template. Use what the user picks. Put the chosen format, its source and any user format instructions verbatim in `brief.md`. The output follows the format; `format.required` content the format has no slot for goes in appendix sections.
+
+**Format verification** runs after stage 8, on `edited.md`. Spawn a fresh `general-purpose` format verifier. Give it the confirmed format and its source (the user's instructions verbatim, the project template or example documents, or the default) and `edited.md`. It derives a checklist of every rule the format imposes (sections and their order, ID scheme, keywords and syntax, MUST/SHOULD usage, naming, location, citation style) plus `format.required`, ignoring trace markers. It checks each rule and writes `format-verify.md` with rows `rule | source of rule | PASS/FAIL | line(s) | fix`. On any FAIL, send the fixes to the editor once. Fixes are structural only: no change to meaning, citations, trace markers or protected tokens beyond what the rule requires. Re-run the editor token diff, then the verifier. Report any FAIL still open in the delivery message, and list `format-verify.md` with the other run files.
 
 ## Orchestration rules
 
@@ -99,7 +114,8 @@ Use `AskUserQuestion` with selectable options. Never ask the user to type a list
    - `Full (Recommended)`: verifiers re-open every citation. Slowest and most token-hungry, but the most reliable.
    - `Targeted`: verifiers check claims the adversaries targeted, claims resting on a single source, and a random 25% of the rest. Any file whose sample fails more than 10% is escalated to full.
    - `Judge spot-check`: no verifiers; the judge re-checks high-impact and borderline citations itself. Fastest, and the weakest guarantee.
-5. Any wrapper-specific choice (e.g. audience).
+5. **Format**, when `format` is set (see **Output format**).
+6. Any wrapper-specific choice (e.g. audience).
 
 Use one call when everything fits in 4 questions. Otherwise ask scope first and run settings second. If a list is longer than 4, split it across questions grouped by theme, or fold the lowest-priority items into one "Everything else" option. "Other" is added automatically for additions. Stop until the user answers. Never re-run stage 1 afterward; if the user's additions change things materially, re-confirm with another UI question.
 
@@ -118,7 +134,7 @@ Members are independent: don't tell any of them what another found. Overlap is d
 
 ## Stage 4: Cross-examination
 
-Once every stage-3 member has finished, `SendMessage` each adversarial member the paths of all `sme-*.md` files. Each attacks specific claims and appends findings to its own file. Every finding names `targets: <claim id>`, gives its counter-evidence with a citation and quote, and says why the target fails (wrong, stale, out of scope, overstated, unsupported).
+Once every stage-3 member has finished, `SendMessage` each adversarial member the paths of all `sme-*.md` files and any `cross_exam` ledgers. Each attacks specific claims and appends findings to its own file. Every finding names `targets: <claim id>`, gives its counter-evidence with a citation and quote, and says why the target fails (wrong, stale, out of scope, overstated, unsupported).
 
 ## Stage 5: Verification
 
@@ -141,9 +157,11 @@ Verdicts: `INCLUDE | INCLUDE-DISPUTED | EXCLUDE | UNRULED`.
 
 The judge writes `rulings.md`: one row per component, `id | verdict | one-line reason` (no leading pipe; for `INCLUDE-DISPUTED`, the reason names the opposing claim ids), followed by verdict counts.
 
+**Decision.** If the wrapper sets `decision`, the judge also writes `decision.file` after its rulings. Read that file (it is short), ask `decision.question` via `AskUserQuestion` and stop until the user answers. Append the answer to `brief.md` under `Decision` before stage 7.
+
 ## Stage 7: Synthesis
 
-Spawn one fresh `general-purpose` synthesiser. Give it `brief.md`, `judge_bias`, the wrapper's `output` spec, `rulings.md`, `gaps.md` and every ledger file. It writes `draft.md` in the `output` structure, built only from `INCLUDE` and `INCLUDE-DISPUTED` claims (disputed claims show both sides). Its job is the explanation: order, connect and frame the included claims so the reader understands the subject, not a list of findings.
+Spawn one fresh `general-purpose` synthesiser. Give it `brief.md`, `judge_bias`, the wrapper's `output` spec, `rulings.md`, `gaps.md`, `decision.file` if set, and every ledger file. It writes `draft.md` in the `output` structure, built only from `INCLUDE` and `INCLUDE-DISPUTED` claims (disputed claims show both sides). Its job is the explanation: order, connect and frame the included claims so the reader understands the subject, not a list of findings.
 
 - Every sentence that carries a claim ends with a trace marker naming its claim ids, `{#sme-jmm-3}` or `{#sme-jmm-3,adv-1-2}`, alongside the wrapper's citation. Wrapper rules may say where markers go.
 - Connecting prose may not add facts. A sentence that asserts something no included claim states is cut, or becomes an `INFERENCE` that names the included ids it rests on.
