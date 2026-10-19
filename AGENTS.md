@@ -19,7 +19,8 @@ Guidance for agents editing this repo. The repo ships [skills.sh](https://skills
 8. **Focus on user ergonomics.** Respect the user's time and attention. Ask as few times as possible: bundle questions into one call, preselect what can be inferred, and use good defaults instead of asking. Invocation should be one line (`teamwork-research: <topic>`). Say what's happening at each stage in a line or two, and keep the delivery message short: path, counts, key gaps. Never dump the full output or the ledgers into the chat. When a change makes a skill more rigorous but more tedious to use, find a way to keep the rigour without the tedium, or make it a user choice.
 9. **Read-only on the user's world.** Agents never modify the user's repo outside `.teamwork/` and never run builds, scripts, tests or hooks from cloned upstream code.
 10. **Every subagent has a prescribed model.** A new role gets a row in `teamwork-core`'s **Models** table, picked for its job: `opus` for judgment (expert analysis, attack, ruling, synthesis), `sonnet` for shallow or mechanical work (scouting, fetching, verification, editing). No role inherits the session model by omission.
-11. **Terse, plain prose.** Skill files are instructions for a model. Short imperative sentences, tables for structured fields, no filler. Run new prose past `stop-slop` if it's installed.
+11. **Documents are for humans.** Every output document follows `teamwork-core`'s **Write for a human reader** rules: answer first, plain words, explanation over lists, no run machinery (ids, verdicts, roles) in the prose. Don't add a wrapper output rule that pushes pipeline jargon into the document.
+12. **Terse, plain prose.** Skill files are instructions for a model. Short imperative sentences, tables for structured fields, no filler. Run new prose past `stop-slop` if it's installed.
 
 ## When you change something
 

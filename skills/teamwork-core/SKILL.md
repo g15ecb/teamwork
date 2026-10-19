@@ -182,6 +182,14 @@ Spawn one fresh `general-purpose` synthesiser. Give it `brief.md`, `judge_bias`,
 - Connecting prose may not add facts. A sentence that asserts something no included claim states is cut, or becomes an `INFERENCE` that names the included ids it rests on.
 - It adds an Excluded digest (from `rulings.md`) and a Gaps section (from `rulings.md` and `gaps.md`).
 
+**Write for a human reader.** The reader is a person who was not part of the run. Every document output follows these rules, and the synthesiser and editor get them verbatim:
+
+- Lead with the answer. Say what matters most first, then the detail that supports it.
+- Plain words and short sentences. Explain a technical term the first time it appears, or swap it for an everyday one.
+- Explain, don't list. Say why a point matters and how points connect; use a list only for things that really are a list.
+- Keep run machinery out of the prose: no claim ids, verdict words (`INCLUDE`, `EXCLUDE`, `UNRULED`), role or agent names, ledger or file names. Say disagreement and uncertainty in plain words ("the sources disagree", "this is likely but unconfirmed"). Wrapper-required markers and citations stay.
+- Be brief. Cut anything the reader doesn't need to understand or act.
+
 Then check the trace yourself. Every marker id must be an included claim; this must print nothing:
 
 ```sh
@@ -196,7 +204,7 @@ Then `SendMessage` the judge the path of `draft.md`. It checks fidelity: each ma
 
 Skip this stage if `output.kind` is `other`; `edited.md` is then `draft.md`.
 
-You spawn the editor. It reads `draft.md` and writes `edited.md`. It should invoke the `stop-slop` skill if one is installed. Otherwise it removes AI prose patterns itself: filler openers and closers, stacked hedges, "it's important to note", rule-of-three padding, empty intensifiers, uniform rhythm, vague attribution, restating summaries, needless bullet lists and em-dash overuse. It also fixes structure. It must not change any fact, number, name, quote, claim scope, label, citation, trace marker or wrapper-protected token; a sentence it moves keeps its marker.
+You spawn the editor. It reads `draft.md` and writes `edited.md`. It should invoke the `stop-slop` skill if one is installed. Otherwise it removes AI prose patterns itself: filler openers and closers, stacked hedges, "it's important to note", rule-of-three padding, empty intensifiers, uniform rhythm, vague attribution, restating summaries, needless bullet lists and em-dash overuse. It also fixes structure and applies **Write for a human reader**: simpler words, shorter sentences, plain explanations of jargon. It must not change any fact, number, name, quote, claim scope, label, citation, trace marker or wrapper-protected token; a sentence it moves keeps its marker.
 
 Then check the edit mechanically yourself:
 

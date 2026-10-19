@@ -19,7 +19,7 @@ Invoke the `teamwork-core` skill with the parameter block below (if the Skill to
 - `scout_lenses`, `role_overrides`, `output.structure`: from the shape's profile below.
 - `evidence_rules`: under `reference` and `background`, target 15+ sources per area.
 - `sme_hints`: methodology SMEs as the shape needs them (primary-source hunter, literature reviewer, practitioner/empirical, historian, quantitative analyst) plus domain experts for the topic. With a repo source, draw domain experts from what scouts found: language/runtime, frameworks, data stores, protocols, serialization, concurrency/consistency, security, performance, build/supply chain.
-- `output`: `kind: document`; path `./understanding-<slug>.md` for `fit`, else `./<slug>.md`. Inline `[n]` for published sources with a numbered Sources list (type, date, accessed) at the end; `[path:line]` for code; `INFERENCE` marked.
+- `output`: `kind: document`; path `./understanding-<slug>.md` for `fit`, else `./<slug>.md`. Inline `[n]` for published sources with a numbered Sources list (type, date, accessed) at the end; `[path:line]` for code; an inferred sentence ends "(inferred from [2], [5])", citing the facts it rests on, never the word `INFERENCE`.
 - `extra_rules`: the editor keeps `[n]` markers, code citations and the Sources list identical.
 
 ## Profiles
