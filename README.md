@@ -10,7 +10,7 @@ npx skills add g15ecb/teamwork
 
 Installs all seven skills.
 
-**You must always install `teamwork-core`.** `teamwork-research`, `teamwork-spec`, `teamwork-design`, `teamwork-plan` and `teamwork-code-understanding` are thin wrappers that call it and do nothing without it. If you install skills selectively, include it:
+**You must always install `teamwork-core`.** `teamwork-research`, `teamwork-spec`, `teamwork-design`, `teamwork-plan` and `teamwork-code-understanding` are thin wrappers that call it and do nothing without it; `teamwork-deliver` reads its rules. If you install skills selectively, include it:
 
 ```
 npx skills add g15ecb/teamwork --skill teamwork-core --skill teamwork-research
@@ -18,17 +18,47 @@ npx skills add g15ecb/teamwork --skill teamwork-core --skill teamwork-research
 
 `teamwork-plan` and `teamwork-deliver` need `python3` 3.9 or later on the PATH (standard library only, no packages): the graph check uses `graphlib`.
 
+## Workflow
+
+Each skill's output is the next one's input. Commit each document as you go: `teamwork-deliver` records progress in git.
+
+```mermaid
+flowchart LR
+    ctx["context.md<br/><i>your notes, tickets, links</i>"]
+    research(["teamwork-research<br/>teamwork-code-understanding"])
+    spec(["teamwork-spec"])
+    design(["teamwork-design"])
+    plan(["teamwork-plan"])
+    deliver(["teamwork-deliver"])
+    review{{"you review<br/>and merge"}}
+
+    research -. "optional background" .-> ctx
+    ctx --> spec
+    spec -- "spec.md<br/>cited requirements" --> design
+    design -- "design.md<br/>you pick 1 of N ranked designs" --> plan
+    plan -- "plan-SLUG.md<br/>you pick 1 of N plans" --> deliver
+    deliver -- "deliver/SLUG branch<br/>one test-gated commit per step" --> review
+    deliver -. "re-run resumes<br/>from Plan-Step trailers" .-> deliver
+
+    classDef skill fill:#e8f0fe,stroke:#1a73e8,color:#0b2a5b
+    classDef doc fill:#f1f3f4,stroke:#80868b,color:#202124
+    classDef you fill:#e6f4ea,stroke:#1e8e3e,color:#0d3b1e
+    class research,spec,design,plan,deliver skill
+    class ctx doc
+    class review you
+```
+
 ## Skills
 
-| Skill | Use |
-|---|---|
-| `teamwork-research` | `teamwork-research: <topic>` writes `SLUG.md`. Confirms sources (web, this repo, repo + web, given files) and shape (how it works, background, compare, reference, fit) before starting; can read upstream source code |
-| `teamwork-spec` | `/teamwork-spec path/to/context.md [format instructions]` writes a spec (your format, the project's, else Gherkin), every step cited to the context |
-| `teamwork-design` | `/teamwork-design path/to/spec.md [format instructions]` turns an existing spec into ranked candidate designs: architects with different stances, pre-mortemed by an adversary, scored 0-5 on spec coverage, simplicity, idiomatic fit, maintainability, safety, future-proofing, operability and testability and shown as a table (you pick the format and priority up front, and which design the document proposes once they're ranked). Every design traces each spec component to the code it changes. Writes the project's design-doc format (else a standard design doc), format-verified |
-| `teamwork-plan` | `/teamwork-plan path/to/design.md [format instructions]` breaks a design into a delivery plan: a dependency graph of steps, each one git commit gated by a test command that must pass first, scheduled in waves that subagents can run in parallel. Planners with different stances (parallel-first, safe increments, vertical slices) are audited for missing and needless dependencies, and you pick the plan. A bundled Python 3.9+ script checks the graph (no cycles, no unordered steps sharing a file) and computes the recommended subagent count. Steps are a TODO checklist; a ticked step records the SHA it landed as. Plans only; `teamwork-deliver` runs the plan |
-| `teamwork-deliver` | `/teamwork-deliver path/to/plan.md` runs a `teamwork-plan` plan: one implementer subagent per step in its own git worktree, wave by wave in parallel. Each step is checked mechanically (it touches only its files, its gate passes, new tests fail without the change), optionally reviewed, and cherry-picked as one commit onto `deliver/<slug>` with a `Plan-Step` trailer. After each wave, a commit on that branch ticks the plan with each landed step's SHA; a re-run resumes from the trailers in git history. A step that fails twice blocks its dependents while independent steps continue. You approve every command it runs; it never touches your checkout or pushes. Standalone (not a core wrapper); needs `teamwork-plan` installed for its graph script |
-| `teamwork-code-understanding` | `teamwork-code-understanding: <topic>` writes `understanding-SLUG.md`. Alias for `teamwork-research` with sources repo + web and shape fit; needs `teamwork-research` installed |
-| `teamwork-core` | Private engine (`user-invocable: false`); the wrappers above call it with a parameter block; `teamwork-deliver` reuses its orchestration rules and models |
+| Skill | Invoke | Takes → writes | What it does |
+|---|---|---|---|
+| `teamwork-research` | `teamwork-research: <topic>` | topic → `SLUG.md` | Cited research report. You confirm sources (web, this repo, repo + web, given files) and shape (how it works, background, compare, reference, fit); can read upstream source code |
+| `teamwork-code-understanding` | `teamwork-code-understanding: <topic>` | topic → `understanding-SLUG.md` | `teamwork-research` preset to repo + web sources and the fit shape; needs `teamwork-research` |
+| `teamwork-spec` | `/teamwork-spec path/to/context.md [format]` | context → spec | Every requirement step cited to the context. Your format, the project's, else Gherkin |
+| `teamwork-design` | `/teamwork-design path/to/spec.md [format]` | spec → design doc | Architects with different stances propose designs, an adversary pre-mortems them, and each is scored 0-5 on eight metrics (spec coverage, simplicity, idiomatic fit, maintainability, safety, future-proofing, operability, testability). You pick from the ranked table. Each spec component is traced to the code it changes |
+| `teamwork-plan` | `/teamwork-plan path/to/design.md [format]` | design → TODO plan | Breaks the design into steps, one test-gated commit each, scheduled in parallel waves. Planners (parallel-first, safe increments, vertical slices) are audited for missing and needless dependencies; you pick the plan. A bundled script checks the graph and computes the recommended subagent count |
+| `teamwork-deliver` | `/teamwork-deliver path/to/plan.md` | plan → `deliver/SLUG` branch | One implementer per step in its own worktree, wave by wave. Checks each step mechanically (touches only its files, gate passes, new tests fail without the change), optionally reviews it, and lands it as one commit with a `Plan-Step` trailer. Ticks the plan once per wave; re-runs resume. A step that fails twice blocks its dependents. You approve every command; never touches your checkout or pushes. Needs `teamwork-plan` for its graph script |
+| `teamwork-core` | (not invoked directly) | — | Private engine. The wrappers call it with a parameter block; `teamwork-deliver` reuses its orchestration rules and models |
 
 Scratch ledgers and rulings live in `.teamwork/<slug>/`.
 
