@@ -73,7 +73,7 @@ The orchestrator runs on the session model. Pass each agent's model as the `Agen
 | Role | Model |
 |---|---|
 | Scouts | `sonnet` |
-| SMEs, adversarial, contrarian, architects, planners, tester | `opus` |
+| SMEs, adversarial, contrarian, architects, planners, tester, implementers, reviewers | `opus` |
 | Web researchers | `sonnet` |
 | Verifiers | `sonnet` |
 | Judge | `opus` |

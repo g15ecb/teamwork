@@ -5,7 +5,7 @@ description: Break an existing design into a delivery plan - a dependency graph 
 
 # teamwork-plan
 
-Invoke the `teamwork-core` skill with the parameter block below (if the Skill tool can't load it, read `../teamwork-core/SKILL.md` relative to this skill's base directory and follow it). This skill only defines the planning roles, the plan format, the graph check and the plan pick; core owns sources, citation, judging and format. It plans; it does not run the plan.
+Invoke the `teamwork-core` skill with the parameter block below (if the Skill tool can't load it, read `../teamwork-core/SKILL.md` relative to this skill's base directory and follow it). This skill only defines the planning roles, the plan format, the graph check and the plan pick; core owns sources, citation, judging and format. It plans; `teamwork-deliver` runs the plan.
 
 **The design comes first.** The user supplies the design file (e.g. a `teamwork-design` output) at invocation, possibly with format instructions and supporting documents (the spec, a `teamwork-code-understanding` output). If no design path is given, ask once via `AskUserQuestion`, offering up to 4 likely candidates (design `.md` files mentioned in the conversation, then under `docs/design/`, `design/`, `docs/`, `rfcs/` or `design-*.md`, recently modified outside `.teamwork/`) with "Other" for a typed path. Never plan from memory or a one-line description. Put each input file's absolute path in `brief.md`; every agent reads them in full. Gaps and contradictions in the design go to Open questions.
 
