@@ -40,7 +40,15 @@ For each wave in `schedule.md`, skipping ticked and blocked steps, run up to K s
 
 **Per step** (steps of a wave in parallel):
 
-1. `git worktree add -b tw/<slug>/<step> <wt> deliver/<slug>`, then run the setup command in `<wt>`. Write `<wt>/../<step>-allowed.txt`: every backticked path on the step's `Touches:` and `Tests:` lines, `:line` suffixes and trailing `/` stripped, one per line.
+1. If a blocked earlier run left `tw/<slug>/<step>`, remove it and its worktree first:
+
+   ```sh
+   old=$(git worktree list --porcelain | awk -v b="branch refs/heads/tw/<slug>/<step>" '/^worktree /{w=substr($0,10)} $0==b {print w}')
+   [ -n "$old" ] && git worktree remove --force "$old"
+   git branch -D tw/<slug>/<step> 2>/dev/null
+   ```
+
+   Then `git worktree add -b tw/<slug>/<step> <wt> deliver/<slug>`, and run the setup command in `<wt>`. Write `<wt>/../<step>-allowed.txt`: every backticked path on the step's `Touches:` and `Tests:` lines, `:line` suffixes and trailing `/` stripped, one per line.
 2. Spawn an implementer (`general-purpose`, `opus`). Its prompt carries the step block verbatim, the design path, `<wt>`, the gate command, its notes path `<run>/impl-<step>.md`, and these rules verbatim:
    - Edit only inside `<wt>`, only the files in `<step>-allowed.txt` (a directory entry allows new files under it). If the step can't be done within them, change nothing and say why.
    - Do what the step's `Do:` says, for the design components on its `Design:` line, and write or update the tests on its `Tests:` line.
@@ -82,9 +90,21 @@ Run every landed step's gate once more in `<int>`, in step order; record failure
 Write `<run>/delivery.md`: one row per step, `step | title | landed / blocked / skipped | SHA or reason`. Tell the user, in a few lines:
 
 - the branch `deliver/<slug>` and how many steps landed, blocked and remain;
-- each blocked step with its one-line reason and the worktree left for it;
+- each blocked step with its one-line reason and the worktree left for it, and the **Recovery** steps below in two lines;
 - any final gate that failed;
 - that the plan on the branch is ticked, re-running resumes, and `<run>` holds the notes, checks, reviews and diffs;
 - that a rebase merge keeps one commit per step; a rebase or squash makes the plan's SHAs stale, but the `Plan-Step` trailers still say which step landed where.
 
 Don't push, open a PR or merge; say the branch is ready for the user to review.
+
+## Recovery
+
+A blocked step is the user's to unblock. Its evidence is in `<run>`: `blocked.md`, `impl-<step>.md`, `checks-<step>.md`, `review-<step>.md`, and the kept worktree `<run>/wt/<step>`.
+
+| Cause | Fix |
+|---|---|
+| The change needs finishing | Commit it on `deliver/<slug>` with the trailer: `git worktree add .teamwork/fix deliver/<slug>`, make the change (the kept worktree has the failed attempt), run the gate, `git -C .teamwork/fix commit -am "<subject>" -m "Plan-Step: <slug>/<step>"`, `git worktree remove .teamwork/fix`. A re-run counts the step done (stage 0 step 4) and ticks it. |
+| The plan is wrong (files outside `Touches:`, wrong gate, step too big) | Fix the plan with `teamwork-plan`. Landed steps stay done: their trailers are in the history. |
+| The setup or gate command is wrong | Correct it via "Other" in stage 1 of the re-run. |
+
+Then re-run `/teamwork-deliver <plan>`. It resumes from the trailers, in a fresh `<run>` (core stage 0), so blocked steps and their dependents are retried. The re-run deletes a blocked step's old worktree and `tw/` branch (stage 2 step 1): copy anything wanted out of it first.
