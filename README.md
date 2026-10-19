@@ -23,29 +23,78 @@ npx skills add g15ecb/teamwork --skill teamwork-core --skill teamwork-research
 Each skill's output is the next one's input. Commit each document as you go: `teamwork-deliver` records progress in git.
 
 ```mermaid
-flowchart LR
-    ctx["context.md<br/><i>your notes, tickets, links</i>"]
-    research(["teamwork-research<br/>teamwork-code-understanding"])
+flowchart TB
+    research(["teamwork-research /<br/>code-understanding"])
+    ctx[/"context.md<br/><i>your notes, tickets, links</i>"/]
     spec(["teamwork-spec"])
+    specmd[/"spec.md<br/><i>cited requirements</i>"/]
     design(["teamwork-design"])
+    designmd[/"design.md<br/><i>1 of N ranked designs</i>"/]
     plan(["teamwork-plan"])
+    planmd[/"plan-SLUG.md<br/><i>1 of N plans</i>"/]
     deliver(["teamwork-deliver"])
-    review{{"you review<br/>and merge"}}
+    branch[/"deliver/SLUG branch<br/><i>one test-gated commit<br/>per step</i>"/]
+    review{{"you review and merge"}}
 
     research -. "optional background" .-> ctx
-    ctx --> spec
-    spec -- "spec.md<br/>cited requirements" --> design
-    design -- "design.md<br/>you pick 1 of N ranked designs" --> plan
-    plan -- "plan-SLUG.md<br/>you pick 1 of N plans" --> deliver
-    deliver -- "deliver/SLUG branch<br/>one test-gated commit per step" --> review
-    deliver -. "re-run resumes<br/>from Plan-Step trailers" .-> deliver
+    ctx --> spec --> specmd --> design
+    design -- "you pick" --> designmd --> plan
+    plan -- "you pick" --> planmd --> deliver
+    deliver --> branch --> review
 
-    classDef skill fill:#e8f0fe,stroke:#1a73e8,color:#0b2a5b
-    classDef doc fill:#f1f3f4,stroke:#80868b,color:#202124
-    classDef you fill:#e6f4ea,stroke:#1e8e3e,color:#0d3b1e
+    classDef skill fill:#e8f0fe,stroke:#1a73e8,stroke-width:2px,color:#0b2a5b
+    classDef doc fill:#f8f9fa,stroke:#9aa0a6,color:#202124
+    classDef you fill:#e6f4ea,stroke:#1e8e3e,stroke-width:2px,color:#0d3b1e
     class research,spec,design,plan,deliver skill
-    class ctx doc
+    class ctx,specmd,designmd,planmd,branch doc
     class review you
+```
+
+### How `teamwork-deliver` uses worktrees
+
+Each step gets its own implementer in its own worktree, branched from `deliver/SLUG`. Passing steps are cherry-picked into an integration worktree on `deliver/SLUG`, and the next wave branches from the result. Your checkout is never touched.
+
+```mermaid
+flowchart TB
+    plan[/"plan-SLUG.md<br/><i>steps grouped into waves</i>"/]
+
+    subgraph wave["one wave · up to K steps in parallel, each branched from deliver/SLUG"]
+        subgraph s1["worktree wt/S1 · branch tw/SLUG/S1"]
+            i1(["implementer"]) --> c1{{"checks + review"}} --> k1["commit<br/><i>Plan-Step: SLUG/S1</i>"]
+        end
+        subgraph s2["worktree wt/S2 · branch tw/SLUG/S2"]
+            i2(["implementer"]) --> c2{{"checks + review"}} --> k2["commit<br/><i>Plan-Step: SLUG/S2</i>"]
+        end
+        subgraph s3["worktree wt/S3 · branch tw/SLUG/S3"]
+            i3(["implementer"]) --> c3{{"checks + review"}} --> k3["commit<br/><i>Plan-Step: SLUG/S3</i>"]
+        end
+    end
+
+    subgraph int["worktree wt/integrate · branch deliver/SLUG"]
+        pick["cherry-pick in step order<br/>re-run each gate"] --> tick["commit: tick the plan<br/><i>with each step's SHA</i>"]
+    end
+
+    blocked[/"blocked.md<br/><i>worktree kept, dependents blocked</i>"/]
+    done{{"deliver/SLUG ready for you to review"}}
+
+    plan --> i1 & i2 & i3
+    k1 & k2 & k3 --> pick
+    c3 -. "fails twice" .-> blocked
+    tick -. "next wave" .-> plan
+    tick -- "last wave" --> done
+
+    classDef agent fill:#e8f0fe,stroke:#1a73e8,stroke-width:2px,color:#0b2a5b
+    classDef check fill:#fef7e0,stroke:#f9ab00,color:#3c2a00
+    classDef doc fill:#f8f9fa,stroke:#9aa0a6,color:#202124
+    classDef git fill:#fce8e6,stroke:#d93025,color:#4a0e0b
+    classDef you fill:#e6f4ea,stroke:#1e8e3e,stroke-width:2px,color:#0d3b1e
+    classDef box fill:#fbfbfb,stroke:#bdc1c6,color:#202124
+    class i1,i2,i3 agent
+    class c1,c2,c3 check
+    class k1,k2,k3,pick,tick git
+    class plan,blocked doc
+    class done you
+    class wave,s1,s2,s3,int box
 ```
 
 ## Skills
